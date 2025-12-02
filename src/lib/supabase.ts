@@ -14,6 +14,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: false, // Session expires when browser closes
     autoRefreshToken: false, // Don't auto-refresh
   },
+  db: {
+    schema: 'public',
+  },
 });
 
 // Database types (we'll expand these as needed)

@@ -124,7 +124,7 @@ export function useBundlePurchase({
           const orderId = generateOrderId();
           
           // Create order record
-          const { error: orderError } = await supabase
+          const { data: orderData, error: orderError } = await supabase
             .from('orders')
             .insert({
               user_id: user.id,
@@ -139,13 +139,32 @@ export function useBundlePurchase({
                 paystack_reference: response.reference,
                 payment_status: 'success',
               },
-            });
+            })
+            .select()
+            .single();
 
           if (orderError) {
             console.error('Error creating order:', orderError);
-            toast.error('Payment successful but failed to create order');
+            console.error('Order error details:', JSON.stringify(orderError, null, 2));
+            console.error('Order data attempted:', {
+              user_id: user.id,
+              order_id: orderId,
+              network: network,
+              msisdn: cleanPhone,
+              package: bundle.display_name,
+              amount: bundle.price_ghc,
+            });
+            
+            // Check if it's an RLS policy error
+            if (orderError.code === '42501' || orderError.message?.includes('policy')) {
+              toast.error('Permission denied. Please check RLS policies in Supabase.');
+            } else {
+              toast.error(`Payment successful but failed to create order: ${orderError.message}`);
+            }
             return;
           }
+
+          console.log('Order created successfully:', orderData);
 
           // TODO: Here you would call your telecom API to actually purchase the bundle
           // For now, we'll mark it as delivered after a short delay

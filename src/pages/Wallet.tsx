@@ -10,16 +10,18 @@ import { CreditCard } from "lucide-react";
 import { toast } from 'sonner';
 
 export default function Wallet() {
-  const { profile } = useAuth();
+  const { profile, refreshProfile } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const success = searchParams.get('success');
 
   useEffect(() => {
     if (success === 'true') {
+      // Refresh profile to get updated balance
+      refreshProfile();
       toast.success('Payment successful! Your wallet has been credited');
       setSearchParams({});
     }
-  }, [success, setSearchParams]);
+  }, [success, setSearchParams, refreshProfile]);
 
   return (
     <div className="flex min-h-screen bg-background">

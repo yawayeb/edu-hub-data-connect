@@ -73,7 +73,7 @@ export default function Transactions() {
     }
   }, [success, setSearchParams]);
 
-  // Fetch orders
+  // Fetch orders with auto-refresh on window focus
   const { data: orders, isLoading: ordersLoading, error: ordersError } = useQuery({
     queryKey: ['orders', user?.id, statusFilter, networkFilter],
     queryFn: async () => {
@@ -99,6 +99,8 @@ export default function Transactions() {
       return (data || []) as Order[];
     },
     enabled: !!user,
+    refetchOnWindowFocus: true, // Auto-refresh when user returns to tab
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
 
   // Fetch wallet transactions
@@ -433,3 +435,4 @@ export default function Transactions() {
     </div>
   );
 }
+
