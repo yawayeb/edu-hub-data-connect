@@ -1,8 +1,14 @@
+import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
-import { Lock, RefreshCw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Lock } from "lucide-react";
 
 export default function MTNUP2U() {
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [selectedPackage, setSelectedPackage] = useState("");
   const balance = "5.6";
 
   return (
@@ -23,6 +29,40 @@ export default function MTNUP2U() {
         <div className="px-4 py-8 md:py-12">
           <div className="max-w-md mx-auto bg-card rounded-2xl shadow-lg p-6 md:p-8 border border-border">
             <div className="space-y-6">
+              {/* Phone Number Input */}
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm font-medium">
+                  PROVIDE PHONE NUMBER <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="Enter Phone Number"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  className="h-12"
+                />
+              </div>
+
+              {/* Package Selector */}
+              <div className="space-y-2">
+                <Label htmlFor="package" className="text-sm font-medium">
+                  CHOOSE A MENU <span className="text-destructive">*</span>
+                </Label>
+                <Select value={selectedPackage} onValueChange={setSelectedPackage}>
+                  <SelectTrigger id="package" className="h-12">
+                    <SelectValue placeholder="Select package" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1gb-daily">1GB Daily - GH¢2.50</SelectItem>
+                    <SelectItem value="2gb-weekly">2GB Weekly - GH¢8.00</SelectItem>
+                    <SelectItem value="5gb-monthly">5GB Monthly - GH¢20.00</SelectItem>
+                    <SelectItem value="10gb-monthly">10GB Monthly - GH¢35.00</SelectItem>
+                    <SelectItem value="20gb-monthly">20GB Monthly - GH¢65.00</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Balance Display */}
               <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-4 flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">Available balance :</span>
@@ -32,13 +72,12 @@ export default function MTNUP2U() {
                 </div>
               </div>
 
-              {/* Load Wallet Button */}
+              {/* Continue Button */}
               <Button 
                 size="lg" 
-                className="w-full h-14 text-base font-medium bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 flex items-center justify-center gap-2"
+                className="w-full h-12 text-base font-medium bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
               >
-                <RefreshCw className="h-5 w-5" />
-                Load a minimum amount of GH¢ 250 to proceed
+                Continue
               </Button>
             </div>
           </div>
