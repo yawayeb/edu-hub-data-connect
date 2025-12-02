@@ -1,0 +1,33 @@
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+
+interface WelcomeCardProps {
+  userName: string;
+  balance: string;
+}
+
+export function WelcomeCard({ userName, balance }: WelcomeCardProps) {
+  return (
+    <Card className="relative overflow-hidden p-8 bg-gradient-to-br from-primary via-primary to-primary-dark shadow-card">
+      <div className="relative z-10 space-y-4">
+        <div>
+          <h2 className="text-3xl font-bold text-primary-foreground mb-2">
+            Greetings, {userName}! 👋
+          </h2>
+          <p className="text-lg text-primary-foreground/90">
+            Your current balance is{" "}
+            <span className="font-bold text-xl">GH¢{balance}</span>
+          </p>
+        </div>
+        <Button 
+          size="lg"
+          className="bg-gradient-to-r from-secondary to-secondary/90 hover:from-secondary/90 hover:to-secondary text-secondary-foreground font-semibold shadow-lg hover:shadow-xl transition-all"
+        >
+          Load Wallet
+        </Button>
+      </div>
+      <div className="absolute top-0 right-0 w-64 h-64 bg-primary-foreground/10 rounded-full blur-3xl -mr-32 -mt-32" />
+      <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary-foreground/10 rounded-full blur-3xl -ml-24 -mb-24" />
+    </Card>
+  );
+}
