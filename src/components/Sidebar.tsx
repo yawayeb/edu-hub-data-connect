@@ -4,8 +4,6 @@ import {
   Home, 
   Wifi, 
   Wallet, 
-  TrendingUp, 
-  Code, 
   ChevronDown,
   ChevronRight,
   Menu,
@@ -27,7 +25,6 @@ const menuItems = [
     subItems: [
       { title: "AT iShare Business", url: "/services/at-ishare" },
       { title: "MTN UP2U Business", url: "/services/mtn-up2u" },
-      { title: "AT Big Time Business", url: "/services/at-bigtime" },
       { title: "Telecel Business", url: "/services/telecel" },
     ],
   },
@@ -36,20 +33,6 @@ const menuItems = [
     icon: Wallet,
     subItems: [
       { title: "Wallet", url: "/wallet" },
-    ],
-  },
-  {
-    title: "Performance",
-    icon: TrendingUp,
-    subItems: [
-      { title: "Sales Performance", url: "/performance/sales" },
-    ],
-  },
-  {
-    title: "Developers",
-    icon: Code,
-    subItems: [
-      { title: "APIs & Webhooks", url: "/developers/apis" },
     ],
   },
 ];
