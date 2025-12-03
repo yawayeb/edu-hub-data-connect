@@ -166,6 +166,32 @@ export function useBundlePurchase({
 
           console.log('Order created successfully:', orderData);
 
+          // Send bundle purchase confirmation email
+          try {
+            const { sendBundlePurchaseEmail } = await import('@/lib/email');
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', user.id)
+              .single();
+
+            if (profile) {
+              await sendBundlePurchaseEmail({
+                fullName: profile.full_name || user.email?.split('@')[0] || 'Customer',
+                email: user.email || '',
+                orderId: orderId,
+                network: network,
+                package: bundle.display_name,
+                phoneNumber: cleanPhone,
+                amount: bundle.price_ghc,
+                status: 'pending',
+              });
+            }
+          } catch (emailError) {
+            // Don't fail purchase if email fails
+            console.error('Failed to send bundle purchase email:', emailError);
+          }
+
           // TODO: Here you would call your telecom API to actually purchase the bundle
           // For now, we'll mark it as delivered after a short delay
           // In production, you'd call your API and update status based on response

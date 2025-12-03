@@ -137,6 +137,30 @@ export function usePaystackPaymentHook({ amount, onSuccess, onError }: UsePaysta
             // Wait a moment for database to update, then refresh profile
             await new Promise(resolve => setTimeout(resolve, 500));
             await refreshProfile();
+
+            // Get updated profile for email
+            const { data: updatedProfile } = await supabase
+              .from('profiles')
+              .select('full_name, balance')
+              .eq('id', user.id)
+              .single();
+
+            // Send wallet top-up confirmation email
+            try {
+              const { sendWalletTopUpEmail } = await import('@/lib/email');
+              if (updatedProfile && user.email) {
+                await sendWalletTopUpEmail({
+                  fullName: updatedProfile.full_name || user.email.split('@')[0] || 'Customer',
+                  email: user.email,
+                  amount: amount,
+                  reference: response.reference,
+                  newBalance: updatedProfile.balance || 0,
+                });
+              }
+            } catch (emailError) {
+              // Don't fail transaction if email fails
+              console.error('Failed to send wallet top-up email:', emailError);
+            }
             
             toast.success(`Payment successful! GH¢${amount.toFixed(2)} added to wallet`);
             onSuccess?.(response.reference);

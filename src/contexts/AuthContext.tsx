@@ -111,6 +111,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
     setSession(data.session);
     setUser(data.user);
+
+    // Send welcome email
+    if (data.user && fullName) {
+      try {
+        const { sendWelcomeEmail } = await import('@/lib/email');
+        await sendWelcomeEmail({
+          fullName: fullName,
+          email: email,
+        });
+      } catch (emailError) {
+        // Don't fail registration if email fails
+        console.error('Failed to send welcome email:', emailError);
+      }
+    }
   };
 
   const signOut = async () => {
