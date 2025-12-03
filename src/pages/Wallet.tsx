@@ -15,13 +15,19 @@ export default function Wallet() {
   const success = searchParams.get('success');
 
   useEffect(() => {
+    const error = searchParams.get('error');
     if (success === 'true') {
       // Refresh profile to get updated balance
       refreshProfile();
       toast.success('Payment successful! Your wallet has been credited');
       setSearchParams({});
+    } else if (error === 'balance_update_failed') {
+      // Refresh profile to show current balance (may not be updated)
+      refreshProfile();
+      toast.error('Payment received but balance update failed. Please contact support if the issue persists.');
+      setSearchParams({});
     }
-  }, [success, setSearchParams, refreshProfile]);
+  }, [success, searchParams, setSearchParams, refreshProfile]);
 
   return (
     <div className="flex min-h-screen bg-background">
