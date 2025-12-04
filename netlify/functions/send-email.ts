@@ -4,9 +4,14 @@ import { Resend } from 'resend';
 // Initialize Resend
 const resendApiKey = process.env.RESEND_API_KEY;
 const fromEmail = process.env.RESEND_FROM_EMAIL || 'Edu-Hub Data <noreply@gigadata.store>';
+const adminEmail = process.env.ADMIN_EMAIL;
 
 if (!resendApiKey) {
   console.warn('⚠️  RESEND_API_KEY not configured. Email functionality will be disabled.');
+}
+
+if (!adminEmail) {
+  console.warn('⚠️  ADMIN_EMAIL not configured. Admin notifications will be disabled.');
 }
 
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
@@ -294,6 +299,308 @@ async function sendWalletTopUpEmail(data: {
   return emailData;
 }
 
+// Helper function to send admin notification for new user signup
+async function sendAdminNewUserNotification(data: { fullName: string; email: string }) {
+  if (!resend || !adminEmail) {
+    return null; // Silently fail if admin email not configured
+  }
+
+  const { data: emailData, error } = await resend.emails.send({
+    from: fromEmail,
+    to: [adminEmail],
+    subject: `🔔 New User Registration - ${data.fullName}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>New User Registration</title>
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">🔔 New User Registration</h1>
+          </div>
+          
+          <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
+            <p style="font-size: 16px; margin-bottom: 20px;">Hello Admin,</p>
+            
+            <p style="font-size: 16px; margin-bottom: 20px;">
+              A new user has just registered on Edu-Hub Data Connect!
+            </p>
+            
+            <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ef4444;">
+              <h2 style="margin-top: 0; color: #ef4444; font-size: 20px;">User Details</h2>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Full Name:</td>
+                  <td style="padding: 8px 0; font-weight: 600;">${data.fullName}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Email:</td>
+                  <td style="padding: 8px 0;">${data.email}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Registration Time:</td>
+                  <td style="padding: 8px 0;">${new Date().toLocaleString('en-US', { timeZone: 'UTC' })} UTC</td>
+                </tr>
+              </table>
+            </div>
+            
+            <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+              <p style="margin: 0; font-size: 14px; color: #92400e;">
+                <strong>📊 Action:</strong> You can view this user in your Supabase dashboard or admin panel.
+              </p>
+            </div>
+            
+            <p style="font-size: 16px; margin-top: 30px;">
+              Best regards,<br>
+              <strong>Edu-Hub Data Connect System</strong>
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px;">
+            <p>© ${new Date().getFullYear()} Edu-Hub Data Connect. All rights reserved.</p>
+          </div>
+        </body>
+      </html>
+    `,
+  });
+
+  if (error) {
+    console.error('Error sending admin new user notification:', error);
+    return null; // Don't throw, just log
+  }
+  return emailData;
+}
+
+// Helper function to send admin notification for bundle purchase
+async function sendAdminBundlePurchaseNotification(data: {
+  fullName: string;
+  email: string;
+  orderId: string;
+  network: string;
+  package: string;
+  phoneNumber: string;
+  amount: number;
+  status: string;
+}) {
+  if (!resend || !adminEmail) {
+    return null; // Silently fail if admin email not configured
+  }
+
+  const networkLabels: Record<string, string> = {
+    MTN_UP2U: 'MTN UP2U',
+    AT_ISHARE: 'AT iShare',
+    AT_BIGTIME: 'AT Big Time',
+    TELECEL: 'Telecel',
+    MTN: 'MTN',
+  };
+
+  const statusLabels: Record<string, string> = {
+    pending: 'Pending',
+    delivered: 'Delivered',
+    failed: 'Failed',
+    refunded: 'Refunded',
+  };
+
+  const statusColors: Record<string, string> = {
+    pending: '#f59e0b',
+    delivered: '#10b981',
+    failed: '#ef4444',
+    refunded: '#6b7280',
+  };
+
+  const { data: emailData, error } = await resend.emails.send({
+    from: fromEmail,
+    to: [adminEmail],
+    subject: `💰 Bundle Purchase - ${data.orderId} - GH¢${data.amount.toFixed(2)}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Bundle Purchase Notification</title>
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">💰 Bundle Purchase Notification</h1>
+          </div>
+          
+          <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
+            <p style="font-size: 16px; margin-bottom: 20px;">Hello Admin,</p>
+            
+            <p style="font-size: 16px; margin-bottom: 20px;">
+              A user has just purchased a data bundle on Edu-Hub Data Connect!
+            </p>
+            
+            <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
+              <h2 style="margin-top: 0; color: #10b981; font-size: 20px;">Purchase Details</h2>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Order ID:</td>
+                  <td style="padding: 8px 0; font-weight: 600;">${data.orderId}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Customer Name:</td>
+                  <td style="padding: 8px 0;">${data.fullName}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Customer Email:</td>
+                  <td style="padding: 8px 0;">${data.email}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Network:</td>
+                  <td style="padding: 8px 0;">${networkLabels[data.network] || data.network}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Package:</td>
+                  <td style="padding: 8px 0;">${data.package}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Phone Number:</td>
+                  <td style="padding: 8px 0; font-family: monospace;">${data.phoneNumber}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Amount:</td>
+                  <td style="padding: 8px 0; font-size: 18px; font-weight: 700; color: #10b981;">GH¢${data.amount.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Status:</td>
+                  <td style="padding: 8px 0;">
+                    <span style="background: ${statusColors[data.status] || '#6b7280'}; color: white; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                      ${statusLabels[data.status] || data.status}
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Purchase Time:</td>
+                  <td style="padding: 8px 0;">${new Date().toLocaleString('en-US', { timeZone: 'UTC' })} UTC</td>
+                </tr>
+              </table>
+            </div>
+            
+            <div style="background: #d1fae5; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
+              <p style="margin: 0; font-size: 14px; color: #065f46;">
+                <strong>📊 Action:</strong> Review this order in your Supabase dashboard or admin panel.
+              </p>
+            </div>
+            
+            <p style="font-size: 16px; margin-top: 30px;">
+              Best regards,<br>
+              <strong>Edu-Hub Data Connect System</strong>
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px;">
+            <p>© ${new Date().getFullYear()} Edu-Hub Data Connect. All rights reserved.</p>
+          </div>
+        </body>
+      </html>
+    `,
+  });
+
+  if (error) {
+    console.error('Error sending admin bundle purchase notification:', error);
+    return null; // Don't throw, just log
+  }
+  return emailData;
+}
+
+// Helper function to send admin notification for wallet top-up
+async function sendAdminWalletTopUpNotification(data: {
+  fullName: string;
+  email: string;
+  amount: number;
+  reference: string;
+  newBalance: number;
+}) {
+  if (!resend || !adminEmail) {
+    return null; // Silently fail if admin email not configured
+  }
+
+  const { data: emailData, error } = await resend.emails.send({
+    from: fromEmail,
+    to: [adminEmail],
+    subject: `💳 Wallet Top-Up - ${data.fullName} - GH¢${data.amount.toFixed(2)}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Wallet Top-Up Notification</title>
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">💳 Wallet Top-Up Notification</h1>
+          </div>
+          
+          <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
+            <p style="font-size: 16px; margin-bottom: 20px;">Hello Admin,</p>
+            
+            <p style="font-size: 16px; margin-bottom: 20px;">
+              A user has just topped up their wallet on Edu-Hub Data Connect!
+            </p>
+            
+            <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+              <h2 style="margin-top: 0; color: #3b82f6; font-size: 20px;">Transaction Details</h2>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Customer Name:</td>
+                  <td style="padding: 8px 0; font-weight: 600;">${data.fullName}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Customer Email:</td>
+                  <td style="padding: 8px 0;">${data.email}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Amount Added:</td>
+                  <td style="padding: 8px 0; font-size: 18px; font-weight: 700; color: #10b981;">+GH¢${data.amount.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">New Balance:</td>
+                  <td style="padding: 8px 0; font-size: 18px; font-weight: 700; color: #3b82f6;">GH¢${data.newBalance.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Payment Reference:</td>
+                  <td style="padding: 8px 0; font-family: monospace; font-size: 12px;">${data.reference}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Transaction Time:</td>
+                  <td style="padding: 8px 0;">${new Date().toLocaleString('en-US', { timeZone: 'UTC' })} UTC</td>
+                </tr>
+              </table>
+            </div>
+            
+            <div style="background: #dbeafe; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+              <p style="margin: 0; font-size: 14px; color: #1e40af;">
+                <strong>📊 Action:</strong> Review this transaction in your Supabase dashboard or admin panel.
+              </p>
+            </div>
+            
+            <p style="font-size: 16px; margin-top: 30px;">
+              Best regards,<br>
+              <strong>Edu-Hub Data Connect System</strong>
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px;">
+            <p>© ${new Date().getFullYear()} Edu-Hub Data Connect. All rights reserved.</p>
+          </div>
+        </body>
+      </html>
+    `,
+  });
+
+  if (error) {
+    console.error('Error sending admin wallet top-up notification:', error);
+    return null; // Don't throw, just log
+  }
+  return emailData;
+}
+
 export const handler: Handler = async (event, context) => {
   // CORS headers
   const headers = {
@@ -346,6 +653,10 @@ export const handler: Handler = async (event, context) => {
           };
         }
         result = await sendWelcomeEmail({ fullName, email });
+        // Send admin notification (don't wait for it, fire and forget)
+        sendAdminNewUserNotification({ fullName, email }).catch((err) => {
+          console.error('Failed to send admin new user notification:', err);
+        });
         break;
       }
 
@@ -368,6 +679,19 @@ export const handler: Handler = async (event, context) => {
           amount,
           status,
         });
+        // Send admin notification (don't wait for it, fire and forget)
+        sendAdminBundlePurchaseNotification({
+          fullName,
+          email,
+          orderId,
+          network,
+          package: pkg,
+          phoneNumber,
+          amount,
+          status,
+        }).catch((err) => {
+          console.error('Failed to send admin bundle purchase notification:', err);
+        });
         break;
       }
 
@@ -386,6 +710,16 @@ export const handler: Handler = async (event, context) => {
           amount,
           reference,
           newBalance,
+        });
+        // Send admin notification (don't wait for it, fire and forget)
+        sendAdminWalletTopUpNotification({
+          fullName,
+          email,
+          amount,
+          reference,
+          newBalance,
+        }).catch((err) => {
+          console.error('Failed to send admin wallet top-up notification:', err);
         });
         break;
       }
